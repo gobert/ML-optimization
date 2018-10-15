@@ -74,9 +74,32 @@ class TestFunction:
 
         return recall, precision, mean_questions
 
-def fitness_func(r, p, q):
-    # insert fitness function logic here.
-    return fitness
+def fitness_func(r, p, q, alpha=1, beta=1, omega=1):
+    '''
+        The F-score is a weighted harmonic mean
+        Here I will adapt the weighted harmonic mean with 3 variables.
+
+        This fitness function will be optimized later: We will look for the
+        parameters that maximimize or minimize the fitness function.
+
+        Ideally we want to:
+        - maximize precision p
+        - maximize recall r
+        - minimize number of questions asked p
+
+        1 / x is a decreasing function. So this is the same than:
+        - maximizing p, r and 1/q
+
+        We can not have q = 0 then, which mean we have to ask at least one
+        question. That make sense to me.
+    '''
+    Q_q = 1 / q
+    return (
+        (alpha + beta + omega) /
+        ( (alpha/r) + (beta/p) + (omega/Q_q) )
+    )
+
+
 
 def main():
     TF = TestFunction()
