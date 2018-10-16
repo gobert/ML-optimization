@@ -2,6 +2,7 @@ import numpy as np
 import random
 import copy
 
+np.random.seed(114)
 izip = zip
 
 
@@ -20,18 +21,6 @@ def grouped(iterable, n):
 
 def gaussian(x, mu=0.5, sig=0.1):
     return np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))
-
-
-# def pairs(lst):
-#     '''
-#         Take a list and returns pairs we can iterate on
-#     '''
-#     i = iter(lst)
-#     first = prev = item = i.next()
-#     for item in i:
-#         yield prev, item
-#         prev = item
-#     yield item, first
 
 
 class TestFunction:
@@ -179,7 +168,7 @@ class Individual:
         # handle crossover point: gen that will be exchanged
         crossover_point = np.random.randint(4)
         gen_list = ['a', 'b', 'c']
-        random.shuffle(gen_list)
+        random.shuffle(gen_list, np.random.rand)
         for idx, gen in enumerate(gen_list):
             if idx < crossover_point:
                 child1_params[gen] = getattr(individual2, gen)
@@ -232,7 +221,7 @@ class Population:
 
     def crossover(self):
         fittest_individuals = copy.copy(self.top10())
-        random.shuffle(fittest_individuals)
+        random.shuffle(fittest_individuals, np.random.rand)
 
         idx = 0
         for fit1, fit2 in grouped(fittest_individuals, 2):
