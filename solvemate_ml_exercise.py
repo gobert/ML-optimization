@@ -260,14 +260,16 @@ def main():
     # 0 ≤ b ≤ 7
     # 0 ≤ c ≤ 5
     # https://towardsdatascience.com/introduction-to-genetic-algorithms-including-example-code-e396e98d8bf3
-    population_size = 20
+    population_size = 200
     population = Population(
         [Individual.create() for _ in range(population_size)]
     )
     population.evaluate_fitness()
+    termination = False
 
     i = 0
-    while i < 100 and population.has_converged() is False:
+    while i < 100 and termination is False:
+        print('-'*100)
         print('iteration %s' % i)
         # selection & crossover & mutation
         population.crossover()
@@ -275,8 +277,11 @@ def main():
         # compute fitness
         population.evaluate_fitness()
 
-        i = i + 1
         print(population.top10()[0].fitness)
+
+        # termination
+        i = i + 1
+        termination = len({i.fitness for i in population.top10()}) == 1
 
 
 if __name__=="__main__":
