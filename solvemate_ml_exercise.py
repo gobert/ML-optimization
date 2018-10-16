@@ -1,8 +1,38 @@
 import numpy as np
+import random
+import copy
+
+izip = zip
+
+
+def round_up_to_even(f):
+    return int(np.ceil(f / 2.) * 2)
+
+
+def grouped(iterable, n):
+    '''
+    Group a list so it's iterable by n like:
+        for obj1, obj2 in grouped([1,2,3,4]):
+    expect iterable % n == 0
+    '''
+    return izip(*[iter(iterable)]*n)
 
 
 def gaussian(x, mu=0.5, sig=0.1):
     return np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))
+
+
+# def pairs(lst):
+#     '''
+#         Take a list and returns pairs we can iterate on
+#     '''
+#     i = iter(lst)
+#     first = prev = item = i.next()
+#     for item in i:
+#         yield prev, item
+#         prev = item
+#     yield item, first
+
 
 class TestFunction:
     '''
@@ -100,12 +130,153 @@ def fitness_func(r, p, q, alpha=1, beta=1, omega=1):
     )
 
 
+class Individual:
+    '''
+        Represents an individual of a population in a genetic algorithm problem
+    '''
+
+    @classmethod
+    def create(cls):
+        return cls(
+            a=np.random.rand() * 1,
+            b=np.random.rand() * 7,
+            c=np.random.rand() * 5
+        )
+
+    def __init__(self, a, b, c):
+        self.a = a
+        self.b = b
+        self.c = c
+        self.r, self.p, self.q, self.fitness = None, None, None, None
+
+    def evaluate_fitness(self):
+        self.__evaluate_rpq__()
+        self.fitness = fitness_func(self.r, self.p, self.q)
+        return self.fitness
+
+    def __evaluate_rpq__(self):
+            self.r, self.p, self.q = TestFunction().evaluate_parameters(
+                a=self.a,
+                b=self.b,
+                c=self.c
+            )
+            return self.r, self.p, self.q
+
+    @classmethod
+    def crossover(cls, individual1, individual2):
+        # init children param as copy of parents gen
+        child1_params = {
+            'a': individual1.a,
+            'b': individual1.b,
+            'c': individual1.c,
+        }
+        child2_params = {
+            'a': individual2.a,
+            'b': individual2.b,
+            'c': individual2.c,
+        }
+
+        # handle crossover point: gen that will be exchanged
+        crossover_point = np.random.randint(4)
+        gen_list = ['a', 'b', 'c']
+        random.shuffle(gen_list)
+        for idx, gen in enumerate(gen_list):
+            if idx < crossover_point:
+                child1_params[gen] = getattr(individual2, gen)
+                child2_params[gen] = getattr(individual1, gen)
+
+        children1 = cls(**child1_params)
+        children2 = cls(**child2_params)
+
+        # Mutation
+        if np.random.rand() <= 0.5:
+            children1.mutate()
+        if np.random.rand() <= 0.5:
+            children2.mutate()
+
+        return children1, children2
+
+    def mutate(self):
+        mutation_probability = 0.33
+        if np.random.rand() < mutation_probability:
+            self.a = np.random.rand() * 1
+        if np.random.rand() < mutation_probability:
+            self.b = np.random.rand() * 7
+        if np.random.rand() < mutation_probability:
+            self.c = np.random.rand() * 5
+        return self
+
+
+class Population:
+    '''
+        Represents an ensemble of individuals in a genetic algorithm problem.
+    '''
+    def __init__(self, individuals):
+        self.individuals = individuals
+
+    def sort_by_fitness(self):
+        return sorted(self.individuals, key=lambda individual: -individual.fitness)
+
+    def top10(self):
+        sorted_individuals = self.sort_by_fitness()
+        size = len(sorted_individuals)
+        return sorted_individuals[:round_up_to_even(size/10)]
+
+    def replace_unable_by_fit(self, unable_idx, fit_individual):
+        fit_individual.fitness = float('inf')
+        sorted_individuals = self.sort_by_fitness()
+        unable_individual = sorted_individuals[-unable_idx]
+        # import pdb; pdb.set_trace()
+        self.individuals = [fit_individual if individual == unable_individual
+                            else individual for individual in self.individuals]
+
+    def crossover(self):
+        fittest_individuals = copy.copy(self.top10())
+        random.shuffle(fittest_individuals)
+
+        idx = 0
+        for fit1, fit2 in grouped(fittest_individuals, 2):
+            fitter1, fitter2 = Individual.crossover(fit1, fit2)
+            self.replace_unable_by_fit(2*idx+1, fitter1)
+            self.replace_unable_by_fit(2*idx+2, fitter2)
+            idx = idx + 1
+
+        return self.individuals
+
+    def evaluate_fitness(self):
+        for individual in self.individuals:
+            if individual.fitness is None or individual.fitness == float('inf'):
+                individual.evaluate_fitness()
+
+    def has_converged(self):
+        # does not produce offspring which are significantly different from the previous generation
+        return False
+
 
 def main():
     TF = TestFunction()
     # (a, b, c) = some set of parameters
-    r, p, q = TF.evaluate_parameters(a, b, c)
-    fitness = fitness_func(r, p, q)
+    # 0 ≤ a ≤ 1
+    # 0 ≤ b ≤ 7
+    # 0 ≤ c ≤ 5
+    # https://towardsdatascience.com/introduction-to-genetic-algorithms-including-example-code-e396e98d8bf3
+    population_size = 20
+    population = Population(
+        [Individual.create() for _ in range(population_size)]
+    )
+    population.evaluate_fitness()
+
+    i = 0
+    while i < 100 and population.has_converged() is False:
+        print('iteration %s' % i)
+        # selection & crossover & mutation
+        population.crossover()
+
+        # compute fitness
+        population.evaluate_fitness()
+
+        i = i + 1
+        print(population.top10()[0].fitness)
 
 
 if __name__=="__main__":
