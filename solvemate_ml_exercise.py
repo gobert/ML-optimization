@@ -203,21 +203,19 @@ class Population:
     def __init__(self, individuals):
         self.individuals = individuals
 
-    def sort_by_fitness(self):
+    def __sort_by_fitness__(self):
         return sorted(self.individuals, key=lambda individual: -individual.fitness)
 
     def top10(self):
-        sorted_individuals = self.sort_by_fitness()
+        sorted_individuals = self.__sort_by_fitness__()
         size = len(sorted_individuals)
         return sorted_individuals[:round_up_to_even(size/10)]
 
     def replace_unable_by_fit(self, unable_idx, fit_individual):
         fit_individual.fitness = float('inf')
-        sorted_individuals = self.sort_by_fitness()
-        unable_individual = sorted_individuals[-unable_idx]
-        # import pdb; pdb.set_trace()
-        self.individuals = [fit_individual if individual == unable_individual
-                            else individual for individual in self.individuals]
+        unable_individual = self.individuals[unable_idx]
+        self.individuals[unable_idx] = fit_individual
+        return unable_individual
 
     def crossover(self):
         fittest_individuals = copy.copy(self.top10())
@@ -226,8 +224,8 @@ class Population:
         idx = 0
         for fit1, fit2 in grouped(fittest_individuals, 2):
             fitter1, fitter2 = Individual.crossover(fit1, fit2)
-            self.replace_unable_by_fit(2*idx+1, fitter1)
-            self.replace_unable_by_fit(2*idx+2, fitter2)
+            self.replace_unable_by_fit(-2*idx+1, fitter1)
+            self.replace_unable_by_fit(-2*idx+2, fitter2)
             idx = idx + 1
 
         return self.individuals
