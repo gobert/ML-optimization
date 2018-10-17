@@ -179,13 +179,13 @@ class Individual:
 
         # Mutation
         if np.random.rand() <= 0.5:
-            children1.mutate()
+            children1.__mutate__()
         if np.random.rand() <= 0.5:
-            children2.mutate()
+            children2.__mutate__()
 
         return children1, children2
 
-    def mutate(self):
+    def __mutate__(self):
         mutation_probability = 0.33
         if np.random.rand() < mutation_probability:
             self.a = np.random.rand() * 1
