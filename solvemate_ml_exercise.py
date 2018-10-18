@@ -2,7 +2,7 @@ import numpy as np
 import random
 import copy
 
-np.random.seed(114)
+np.random.seed(112)
 izip = zip
 
 
@@ -224,8 +224,8 @@ class Population:
         idx = 0
         for fit1, fit2 in grouped(fittest_individuals, 2):
             fitter1, fitter2 = Individual.crossover(fit1, fit2)
-            self.replace_unable_by_fit(-2*idx+1, fitter1)
-            self.replace_unable_by_fit(-2*idx+2, fitter2)
+            self.replace_unable_by_fit(-2*idx-1, fitter1)
+            self.replace_unable_by_fit(-2*idx-2, fitter2)
             idx = idx + 1
 
         return self.individuals
@@ -234,6 +234,7 @@ class Population:
         for individual in self.individuals:
             if individual.fitness is None or individual.fitness == float('inf'):
                 individual.evaluate_fitness()
+        self.individuals = self.__sort_by_fitness__()
 
     def has_converged(self):
         # does not produce offspring which are significantly different from the previous generation

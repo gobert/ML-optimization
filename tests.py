@@ -128,3 +128,14 @@ class TestPopulation:
         population.evaluate_fitness()
 
         assert len(list(filter(lambda individual: individual.fitness is None, population.individuals))) == 0
+
+    def test_evaluate_fitness_sort_by_fitness(self, population):
+        ''' sort the population by fitness '''
+        population.individuals[0].fitness = 0
+        population.individuals[1].fitness = 1
+
+        population.evaluate_fitness()
+
+        assert population.individuals[0].fitness > population.individuals[1].fitness
+
+        # assert len(list(filter(lambda individual: individual.fitness is None, population.individuals))) == 0
