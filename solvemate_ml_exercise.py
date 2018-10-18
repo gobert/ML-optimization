@@ -245,35 +245,70 @@ class Population:
         return len({i.fitness for i in self.top10()}) == 1
 
 
+class GeneticAlgorithm():
+    def __init__(self, population_size=200):
+        self.population_size = population_size
+
+    def fit(self):
+        self.population = Population(
+            [Individual.create() for _ in range(self.population_size)]
+        )
+        self.population.evaluate_fitness()
+        return self
+
+    def transform(self, logging=None):
+        termination = False
+        best_individual = self.population.top10()[0]
+        i = 0
+        while termination is False:
+            if logging == 1:
+                self.__log_iteration__(i)
+
+            # selection & crossover & mutation
+            self.population.crossover()
+
+            # compute fitness
+            self.population.evaluate_fitness()
+
+            best_individual = self.population.top10()[0]
+            if logging == 1:
+                self.__log_individual__(best_individual)
+
+            # termination
+            i = i + 1
+            termination = self.population.has_converged()
+
+        return {
+            'best_individual': best_individual,
+            'best_fitness': best_individual.fitness,
+            'recall': best_individual.r,
+            'precision': best_individual.p,
+            'nb_questions': best_individual.q,
+            'best_params': {
+                'a': best_individual.a,
+                'b': best_individual.b,
+                'c': best_individual.c,
+            },
+        }
+
+    def __log_iteration__(self, i):
+        print('-'*100)
+        print('Iteration: %s' % i)
+
+    def __log_individual__(self, individual):
+        print('Best fitness' % individual.fitness)
+        print('- R: %s' % individual.r)
+        print('- p: %s' % individual.p)
+        print('- q: %s' % individual.q)
+        print('Best Parameters:')
+        print('- a: %s' % individual.a)
+        print('- b: %s' % individual.b)
+        print('- c: %s' % individual.c)
+
+
 def main():
     TF = TestFunction()
-    # (a, b, c) = some set of parameters
-    # 0 ≤ a ≤ 1
-    # 0 ≤ b ≤ 7
-    # 0 ≤ c ≤ 5
-    # https://towardsdatascience.com/introduction-to-genetic-algorithms-including-example-code-e396e98d8bf3
-    population_size = 200
-    population = Population(
-        [Individual.create() for _ in range(population_size)]
-    )
-    population.evaluate_fitness()
-    termination = False
-
-    i = 0
-    while i < 100 and termination is False:
-        print('-'*100)
-        print('iteration %s' % i)
-        # selection & crossover & mutation
-        population.crossover()
-
-        # compute fitness
-        population.evaluate_fitness()
-
-        print(population.top10()[0].fitness)
-
-        # termination
-        i = i + 1
-        termination = population.has_converged()
+    GeneticAlgorithm(population_size=200).fit().transform(logging=1)
 
 
 if __name__=="__main__":
