@@ -116,7 +116,7 @@ class TestPopulation:
             return list(map(lambda individual: individual.fitness, individuals))
         original_fitnesses = to_fitness(population.individuals)
         new_fitnesses = to_fitness(population.crossover())
-        assert len(set(original_fitnesses) - set(new_fitnesses)) == 10
+        assert len(set(original_fitnesses) - set(new_fitnesses)) == 1
 
     '''
         .evaluate_fitness()

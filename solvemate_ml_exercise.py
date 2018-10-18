@@ -221,12 +221,16 @@ class Population:
         fittest_individuals = copy.copy(self.top10())
         random.shuffle(fittest_individuals, np.random.rand)
 
-        idx = 0
+        new_generation = []
         for fit1, fit2 in grouped(fittest_individuals, 2):
             fitter1, fitter2 = Individual.crossover(fit1, fit2)
-            self.replace_unable_by_fit(-2*idx-1, fitter1)
-            self.replace_unable_by_fit(-2*idx-2, fitter2)
-            idx = idx + 1
+            new_generation.append(fitter1)
+            new_generation.append(fitter2)
+
+        [individual.evaluate_fitness() for individual in new_generation]
+
+        new_generation = sorted(new_generation, key=lambda individual: -individual.fitness)
+        self.replace_unable_by_fit(-1, new_generation[0])
 
         return self.individuals
 
@@ -237,8 +241,8 @@ class Population:
         self.individuals = self.__sort_by_fitness__()
 
     def has_converged(self):
-        # does not produce offspring which are significantly different from the previous generation
-        return False
+        # when top10 is homogen
+        return len({i.fitness for i in self.top10()}) == 1
 
 
 def main():
@@ -269,7 +273,7 @@ def main():
 
         # termination
         i = i + 1
-        termination = len({i.fitness for i in population.top10()}) == 1
+        termination = population.has_converged()
 
 
 if __name__=="__main__":
